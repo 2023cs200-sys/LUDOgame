@@ -14,7 +14,7 @@
 #define Pita_Kotuwa 46
 
 //player define
-char *name[4] = {"Red","Green","Yellow","Blue"};
+char *name[4] = {"\033[1;31mRed\033[0m","\033[1;32mGreen\033[0m","\033[0;33mYellow\033[0m","\033[1;34mBlue\033[0m"};
 
 //for mysterycells
 static int countMcells = 0;
@@ -323,7 +323,6 @@ int red(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
-            printf("\033[1;31m");
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
@@ -399,7 +398,6 @@ int green(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
-            printf("\033[1;32m");
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
@@ -473,7 +471,6 @@ int yellow(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
-            printf("\033[0;33m");
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
@@ -550,7 +547,6 @@ int blue(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
-            printf("\033[1;34m");
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
