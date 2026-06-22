@@ -1,8 +1,9 @@
-#include "types.c"
+﻿#include "types.c"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <windows.h>
 
 
 #define base -1
@@ -14,7 +15,8 @@
 #define Pita_Kotuwa 46
 
 //player define
-char *name[4] = {"\033[1;31mRed\033[0m","\033[1;32mGreen\033[0m","\033[0;33mYellow\033[0m","\033[1;34mBlue\033[0m"};
+char *name[4] = {"Red","Green","Yellow","Blue"};
+char *fname[4] = {"\033[1;31mRed\033[0m","\033[1;32mGreen\033[0m","\033[0;33mYellow\033[0m","\033[1;34mBlue\033[0m"};
 
 //for mysterycells
 static int countMcells = 0;
@@ -34,7 +36,7 @@ char *maxPlayer = NULL;
 void rollDice(){
     for(int i = 0; i< 4; i++){
         int roll = roll_dice();
-        printf("%s rolls %d\n",name[i],roll);
+        printf("%s rolls %d\n",fname[i],roll);
 
         //search for first player per each round
         if (max < roll)
@@ -53,7 +55,7 @@ void rollDice(){
 void playerOrder(){
     printf("player order: ");
     for(int i = 0; i< 4; i++){
-        printf("%s\t", name[(maxIndex + i) % 4]);
+        printf("%s\t", fname[(maxIndex + i) % 4]);
     }
 }
 
@@ -66,7 +68,7 @@ void initPlayers(){
     //for players
     for (int i = 0; i < 4; i++)
     {
-        allPlayers[i].name = name[i];
+        allPlayers[i].name = fname[i];
         allPlayers[i].Sposition = Spositions[i];
 
         //for pieces
@@ -262,6 +264,29 @@ int allPiecesInHome(int current_player){
     
 }
 
+void celebrate(){
+    char *trophy =
+        "     ___________\n"
+        "    '._==_==_=_.'\n"
+        "    .-\\:      /-.\n"
+        "   | (|:.     |) |\n"
+        "    '-|:.     |-'\n"
+        "      \\::.    /\n"
+        "       '::. .'\n"
+        "         ) (\n"
+        "       _.' '._\n"
+        "      `\"\"\"\"\"\"\"`\n";
+
+    char spinner[] = "-\\|/";
+    for (int i = 0; i < 12; i++){
+        printf("\r  %c  CELEBRATING... ", spinner[i % 4]);
+        fflush(stdout);
+        Sleep(80);
+    }
+    printf("\r");
+    printf("\033[1;33m%s\033[0m\n", trophy);
+    Sleep(300);
+}
 
 //player red
 int red(){
@@ -323,6 +348,7 @@ int red(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
+            celebrate();
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
@@ -398,6 +424,7 @@ int green(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
+            celebrate();
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
@@ -471,6 +498,7 @@ int yellow(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
+            celebrate();
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
@@ -547,6 +575,7 @@ int blue(){
         move_pieces(current_player, movePiece, roll);
         if (allPiecesInHome(current_player))
         {
+            celebrate();
             printf("\n## %s wins the game by putting all pieces in home!!!!!!! :)\n\n",allPlayers[current_player].name);
             return 1; //game end
         }
