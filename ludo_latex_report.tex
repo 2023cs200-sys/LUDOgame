@@ -1,0 +1,178 @@
+\documentclass{article}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+\title{LUDO game in C}
+\author{H.G.Suraweera}
+\date{\today}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize, % Adjust font size here
+    keywordstyle=\bfseries\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{gray},
+    morecomment=[l][\color{magenta}]{\#},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=10pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    tabsize=4,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    escapeinside={\%*}{*)},
+    morekeywords={*,...}, % Add custom keywords here
+    columns=fullflexible,
+    keepspaces=true,
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This report documents the implementation of a board game in C. The game involves four players, each controlling four pieces, with the objective of moving all pieces from a starting base to a home position. The game includes various mechanics, such as dice rolls, piece movement, capturing opponents' pieces, and the introduction of mystery cells that can teleport pieces. The code is designed to be modular and maintainable, with clear separation of concerns.
+
+\section{Structures Used to Represent the Board and Pieces}
+The core structure used in the implementation is the \texttt{player} structure, which encapsulates all the relevant information for each player. This structure includes the player's name, the starting position on the board, an array representing the positions of the four pieces, and an array for teleportation positions.
+
+\begin{lstlisting}[language=C, caption=Player Structure]
+struct player {
+    char *name;
+    int Sposition;
+    int pieces[4];
+    int teleport[3];
+};
+\end{lstlisting}
+
+The array \texttt{allPlayers[4]} holds the details for all four players. Each player's starting position on the board is stored in the \texttt{Spositions[]} array. Additionally, various constants such as \texttt{base}, \texttt{home}, and \texttt{onApprouchcell} are used to signify special states of the pieces.
+
+\section{Game Mechanics and Logic}
+The game revolves around several key mechanics, each of which is implemented as a separate function. The main mechanics include dice rolling, determining the order of play, moving pieces on the board, capturing opponent pieces, and handling mystery cells.
+
+\subsection{Dice Rolling and Player Order}
+The function \texttt{rollDice()} is used to determine which player starts the game by rolling a die for each player and identifying the highest roll. The order of play is then determined based on this initial roll.
+
+\begin{lstlisting}[language=C, caption=Dice Rolling]
+void rollDice(){
+    for(int i = 0; i < 4; i++){
+        int roll = roll_dice();
+        printf("%s rolls %d\n", name[i], roll);
+
+        if (max < roll) {
+            max = roll;
+            maxPlayer = name[i];
+            maxIndex = i;
+        }
+    }
+    printf("\n%s player rolled the highest with %d and began the game first!!!!\n\n", maxPlayer, max);
+}
+\end{lstlisting}
+
+The order in which players take their turns is then set using the \texttt{playerOrder()} function, ensuring a fair and consistent sequence of play.
+
+\subsection{Piece Movement and Capturing}
+Piece movement is handled by the \texttt{move\_pieces()} function. This function checks whether a piece can be moved, based on the result of a dice roll, and updates the piece's position accordingly. If a piece lands on an opponent's piece, the opponent's piece is sent back to the base.
+
+\begin{lstlisting}[language=C, caption=Piece Movement]
+int move_pieces(int current_player, int piece_index, int roll){
+    // Approach cell positions
+    int ApproCell[4] = {26,39,0,13};
+
+    if (allPlayers[current_player].pieces[piece_index] == base) {
+        if (roll == 6) {
+            allPlayers[current_player].pieces[piece_index] = allPlayers[current_player].Sposition;
+            printf("%s's piece %d enters the board at position %d (start position)!!!\n", allPlayers[current_player].name, (piece_index + 1), allPlayers[current_player].Sposition);
+        } else {
+            printf("%s's piece %d still stay on home :(\n", allPlayers[current_player].name, piece_index + 1);
+        }
+    } else if (allPlayers[current_player].pieces[piece_index] == onApprouchcell) {
+        roadToHome(current_player, piece_index, roll);
+    } else {
+        int newPosition = (allPlayers[current_player].pieces[piece_index] + roll) % 52;
+        if (roll == 6) {
+            allPlayers[current_player].pieces[piece_index] = newPosition;
+            printf("%s's piece %d moved to position %d\n", allPlayers[current_player].name, piece_index + 1, newPosition);
+        }
+
+        if (capture(current_player, piece_index, newPosition) || roll != 6) {
+            allPlayers[current_player].pieces[piece_index] = newPosition;
+            printf("%s's piece %d moved to position %d\n", allPlayers[current_player].name, piece_index + 1, newPosition);
+            if (newPosition == ApproCell[current_player]) {
+                allPlayers[current_player].pieces[piece_index] = onApprouchcell;
+                printf("%s's piece %d landed on an APPROACH position %d!!!!\n", allPlayers[current_player].name, (piece_index + 1), ApproCell[current_player]);
+            } else if (allPlayers[current_player].pieces[piece_index] == mcell) {
+                printf("%s's piece %d enters on the mystery cell!!!\n", allPlayers[current_player].name, (piece_index + 1));
+                mysterycellbehave(current_player, piece_index);
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+The \texttt{capture()} function ensures that when a piece lands on the same position as an opponent's piece, the opponent's piece is captured and sent back to the base.
+
+\subsection{Mystery Cells and Special Actions}
+The game includes a special mechanic involving mystery cells, which can randomly appear on the board. These cells have the ability to teleport a piece to one of three predefined positions, adding an element of unpredictability to the game.
+
+\begin{lstlisting}[language=C, caption=Mystery Cells]
+int mysterycellbehave(int current_player, int piece_index) {
+    int teleport[3] = {9, 27, 46};
+    int teleroll = (rand() % 3);
+    switch (teleroll) {
+    case 0:
+        allPlayers[current_player].pieces[piece_index] = teleport[0];
+        printf("%s's piece %d teleported to position %d (Bhawana)!!!\n", allPlayers[current_player].name, (piece_index + 1), Bhawana);
+        break;
+    case 1:
+        allPlayers[current_player].pieces[piece_index] = teleport[1];
+        printf("%s's piece %d teleported to position %d (Kotuwa)!!!\n", allPlayers[current_player].name, (piece_index + 1), Kotuwa);
+        break;
+    case 2:
+        allPlayers[current_player].pieces[piece_index] = teleport[2];
+        printf("%s's piece %d teleported to position %d (Pita-Kotuwa)!!!\n", allPlayers[current_player].name, (piece_index + 1), Pita_Kotuwa);
+        break;
+    default:
+        break;
+    }
+}
+\end{lstlisting}
+
+\section{Justification for the Used Structures}
+The choice of structures and arrays was driven by the need for a clear and maintainable organization of game data. The \texttt{player} structure allows for easy access and manipulation of each player's information, while arrays provide an efficient way to manage the multiple pieces each player controls. The use of constants like \texttt{base}, \texttt{home}, and \texttt{onApprouchcell} ensures clarity in the code and simplifies the logic for handling different states of the pieces.
+
+\section{Discussion of the Efficiency of the Program}
+The efficiency of the program is primarily determined by the time complexity of its key operations, such as piece movement, player order determination, and special actions like teleportation.
+
+\subsection{Time Complexity of Piece Movement}
+The \texttt{move\_pieces()} function, which is central to the game, involves several operations:
+\begin{itemize}
+    \item Checking if the piece is at the base or on the board.
+    \item Updating the piece's position based on the dice roll.
+    \item Checking for captures and special positions like approach cells or mystery cells.
+\end{itemize}
+The time complexity of these operations is \(\mathcal{O}(1)\), as they involve a fixed number of arithmetic and comparison operations regardless of the size of the board or the number of pieces.
+
+\subsection{Time Complexity of Player Order Determination}
+The \texttt{rollDice()} function determines the player order by rolling a die for each player and comparing the results. The time complexity of this operation is \(\mathcal{O}(n)\), where \(n\) is the number of players (in this case, 4). Since \(n\) is constant, this operation effectively runs in constant time, \(\mathcal{O}(1)\).
+
+\subsection{Time Complexity of Capturing Opponent Pieces}
+The \texttt{capture()} function checks whether a piece lands on an opponent's piece and sends the opponent's piece back to the base if necessary. This function involves iterating over the opponent's pieces, making its time complexity \(\mathcal{O}(m)\), where \(m\) is the number of opponent pieces on the board. Given the fixed number of players and pieces, this also simplifies to \(\mathcal{O}(1)\) in practice.
+
+\subsection{Time Complexity of Mystery Cell Teleportation}
+The \texttt{mysterycellbehave()} function randomly teleports a piece to one of three predefined positions. The time complexity of this function is \(\mathcal{O}(1)\) since it involves a simple random selection and a few assignment operations.
+
+\subsection{Overall Program Efficiency}
+The overall time complexity of the program, considering its main operations, is \(\mathcal{O}(1)\) for most individual functions due to the fixed number of players and pieces. The modular design and the use of efficient data structures ensure that the game runs smoothly, even as the game progresses. The operations scale well, maintaining constant time performance, which contributes to the program's efficiency and responsiveness.
+
+
+
+\section{Conclusion}
+The C implementation of the board game is both efficient and maintainable. The use of structures and arrays provides a clear organization of game data, while the modular design of the functions ensures that the game logic is easy to understand and modify. The inclusion of special mechanics like mystery cells adds an element of unpredictability, making the game more engaging for players.
+
+\end{document}
